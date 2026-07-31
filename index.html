@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Emirance</title>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&family=Arial&family=Poppins:wght@400;500&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+<!-- Supabase JS Client Library -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root {
@@ -479,17 +480,19 @@ let beds = {};
 let view = {level:"dashboard", floor:null, main:null, apt:null};
 let selected = null;
 
-// ---------------- Supabase Setup ----------------
-// 1. Create a free project at https://supabase.com
-// 2. Go to Project Settings -> API and copy your Project URL + anon public key below
-const SUPABASE_URL = "https://hmginnifwpxvwyrzsgue.supabase.co";       // TODO: replace
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhtZ2lubmlmd3B4dnd5cnpzZ3VlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUzNDUxMjQsImV4cCI6MjEwMDkyMTEyNH0.bZUfh92hzAmt91Azu07Is_uS62uomj9tDZoV0LoW2Lk";                  // TODO: replace
+// ================================================================
+// SUPABASE CLIENT CONFIGURATION
+// ================================================================
+// Replace the URL and Anon Key below with values from:
+// Supabase Dashboard -> Project Settings -> API
+const SUPABASE_URL = "https://hmginnifwpxvwyrzsgue.supabase.co"; 
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhtZ2lubmlmd3B4dnd5cnpzZ3VlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUzNDUxMjQsImV4cCI6MjEwMDkyMTEyNH0.bZUfh92hzAmt91Azu07Is_uS62uomj9tDZoV0LoW2Lk"; 
 
 const supabaseClient = (SUPABASE_URL.includes("YOUR-PROJECT-REF"))
   ? null
   : window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-const STATE_ROW_ID = 1; // single shared row holding the whole app's data
+const STATE_ROW_ID = 1; // All app state is saved into Row ID #1
 
 function isEditingActive(){
   const overlay = document.getElementById("overlay");
@@ -532,11 +535,11 @@ function loadFromLocalCache(){
 }
 
 async function loadFromStorage(){
-  // Instant paint from the last known local copy (also works offline)
+  // Instant visual load from local storage cache
   loadFromLocalCache();
 
   if(!supabaseClient){
-    console.warn("Supabase not configured yet - set SUPABASE_URL / SUPABASE_ANON_KEY. Using local storage only.");
+    console.warn("Supabase not configured. Set valid SUPABASE_URL and SUPABASE_ANON_KEY. Using local storage mode.");
     return;
   }
 
@@ -552,18 +555,18 @@ async function loadFromStorage(){
     if(row && row.data && Object.keys(row.data).length){
       applyData(row.data);
     } else {
-      // Nothing in Supabase yet: seed some demo data once, then push it up
+      // If table is empty, seed demo data once and push up
       seed();
       await saveToStorage();
     }
   }catch(e){
-    console.error("Could not reach Supabase, using local data instead.", e);
+    console.error("Failed to fetch from Supabase. Falling back to local data.", e);
   }
 }
 
 async function saveToStorage(){
   const data = { config, customNames, beds, isAdmin };
-  localStorage.setItem("emirance_app_data_v3", JSON.stringify(data)); // offline cache
+  localStorage.setItem("emirance_app_data_v3", JSON.stringify(data)); // cache locally
 
   if(!supabaseClient) return;
 
@@ -571,9 +574,9 @@ async function saveToStorage(){
     const { error } = await supabaseClient
       .from('app_state')
       .upsert({ id: STATE_ROW_ID, data, updated_at: new Date().toISOString() });
-    if(error) console.error("Supabase save error:", error);
+    if(error) console.error("Supabase error during save:", error);
   }catch(e){
-    console.error("Supabase save failed:", e);
+    console.error("Supabase upsert failed:", e);
   }
 }
 
@@ -585,7 +588,7 @@ function subscribeRealtime(){
       { event: '*', schema: 'public', table: 'app_state', filter: `id=eq.${STATE_ROW_ID}` },
       (payload) => {
         if(!payload.new || !payload.new.data) return;
-        if(isEditingActive()) return; // don't yank a form out from under someone typing
+        if(isEditingActive()) return; // Do not interrupt user if overlay is open
         applyData(payload.new.data);
         render();
       }
