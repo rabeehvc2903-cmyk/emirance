@@ -1,0 +1,1714 @@
+<!DOCTYPE html>
+<html lang="ml">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Emirance</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&family=Arial&family=Poppins:wght@400;500&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root {
+  --bg-color: #1B2430;
+  --card-bg: #232E3D;
+  --border-color: #2E3B4E;
+  --text-color: #EDE6D8;
+  --accent-color: #C9A45C;
+  --subtext-color: #8A94A6;
+  --due-color: #E74C3C;
+  --paid-color: #2ECC71;
+  --base-font-family: 'IBM Plex Sans', sans-serif;
+  --base-font-size: 14px;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family: var(--base-font-family); font-size: var(--base-font-size); background:var(--bg-color);color:var(--text-color);min-height:100vh}
+
+/* Login Screen Styles */
+#loginScreen {
+  position: fixed;
+  inset: 0;
+  background: var(--bg-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+}
+.login-card {
+  width: min(400px, 100%);
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+  text-align: center;
+}
+.login-card h2 {
+  font-family: 'Fraunces', serif;
+  color: var(--accent-color);
+  font-size: 24px;
+  margin-bottom: 6px;
+}
+.login-card p {
+  color: var(--subtext-color);
+  font-size: 13px;
+  margin-bottom: 20px;
+}
+
+header{border-bottom:1px solid var(--border-color);padding:18px 16px;margin-bottom:12px;}
+
+.sub-header-container { text-align: center; margin-bottom: 8px; display: none; }
+.logo-sub{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:1.5px;color:var(--subtext-color)}
+
+.header-bottom-row { display: flex; align-items: center; justify-content: space-between; }
+.header-left { flex: 1; display: flex; justify-content: flex-start; align-items: center; }
+.header-center { flex: 2; text-align: center; }
+.header-right { flex: 1; display: flex; justify-content: flex-end; align-items: center; gap: 8px; }
+
+.logo-img{max-height:45px;max-width:90px;object-fit:contain;border-radius:4px;display:none;}
+h1{font-family:var(--base-font-family);font-size:calc(var(--base-font-size) + 8px);font-weight:600;color:var(--accent-color);letter-spacing:0.5px;}
+
+.btn-menu{
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: 0.2s;
+}
+.btn-menu:hover{ border-color: var(--accent-color); }
+.btn-menu.unlocked{ background: var(--accent-color); color: var(--bg-color); border-color: var(--accent-color); }
+
+.btn-lock{background:var(--due-color);color:#FFF;padding:8px 10px;border-radius:6px;font-size:12px;cursor:pointer;border:none;display:inline-block;white-space:nowrap;}
+
+.stats-container{display:flex;flex-direction:column;gap:8px;margin-top:10px;margin-bottom:12px;width:100%;}
+.stats-row{
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  width: 100%;
+  background: var(--card-bg);
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  text-align: center;
+}
+.stats-col{ display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.stats-col:not(:last-child){ border-right: 1px solid var(--border-color); }
+.stats-row span{color:var(--subtext-color);font-size:calc(var(--base-font-size) - 5px);font-family:var(--base-font-family);letter-spacing:0.5px;margin-bottom:2px;display:block;}
+.stats-row b{font-size:calc(var(--base-font-size));font-weight:600;}
+
+.section-summary-box {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 10px;
+}
+.section-summary-title {
+  font-family: var(--base-font-family);
+  font-size: calc(var(--base-font-size) - 2px);
+  color: var(--accent-color);
+  font-weight: 600;
+  margin-bottom: 8px;
+  letter-spacing: 0.5px;
+}
+.section-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  text-align: center;
+  font-size: calc(var(--base-font-size) - 1px);
+}
+.section-summary-grid div { display: flex; flex-direction: column; align-items: center; }
+.section-summary-grid span { color: var(--subtext-color); font-size: calc(var(--base-font-size) - 4px); font-family: var(--base-font-family); margin-bottom: 2px; }
+
+/* Professional Navigation Button to Floors - Positioned at Bottom */
+.btn-goto-floors {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  background: var(--card-bg);
+  border: 1px solid var(--accent-color);
+  border-radius: 10px;
+  padding: 16px;
+  margin-top: 16px;
+  margin-bottom: 16px;
+  color: var(--accent-color);
+  font-family: var(--base-font-family);
+  font-size: calc(var(--base-font-size) + 1px);
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.btn-goto-floors:hover {
+  background: rgba(201, 164, 92, 0.1);
+}
+
+.search-box-row { display: flex; gap: 8px; margin-top: 12px; align-items: center; }
+.search-box { flex: 1; }
+.search-box input, .level-search-box input, .panel select, .panel input, .login-card input {
+  font-family: var(--base-font-family);
+  font-size: var(--base-font-size);
+}
+.search-box input, .level-search-box input {
+  width: 100%;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: var(--text-color);
+  outline: none;
+}
+.search-box input:focus, .level-search-box input:focus { border-color: var(--accent-color); }
+
+.level-search-box { margin-bottom: 10px; }
+
+main{padding:0 16px 40px}
+.btn-level{display:block;width:100%;background:var(--card-bg);border:1px solid var(--border-color);border-radius:8px;padding:12px 14px;margin-bottom:8px;text-align:left;color:var(--text-color);cursor:pointer;position:relative}
+.btn-level:hover{border-color:var(--accent-color)}
+.floor{border-left:3px solid var(--accent-color)}
+.main{border-left:3px solid #7B93B0}
+.apt{border-left:3px solid #6FA287}
+.bed{border-left:3px solid var(--subtext-color);padding:10px}
+.bed.occupied{border-left-color:var(--accent-color)}
+.title-row{display:flex;justify-content:space-between;align-items:center}
+.title{font-family:var(--base-font-family);font-weight:600;font-size:calc(var(--base-font-size) + 1px)}
+.edit-tag{color:var(--accent-color);font-size:calc(var(--base-font-size) - 3px);background:rgba(201,164,92,0.15);padding:3px 8px;border-radius:4px;border:1px solid var(--accent-color)}
+.sub{font-size:calc(var(--base-font-size) - 2px);color:var(--subtext-color);margin-top:2px;font-family:var(--base-font-family);}
+.back{background:none;border:none;color:var(--accent-color);font-family:var(--base-font-family);font-size:calc(var(--base-font-size));font-weight:600;cursor:pointer;margin-bottom:14px;display:flex;align-items:center;gap:6px;}
+.overlay{position:fixed;inset:0;background:rgba(11,15,22,0.8);display:none;justify-content:flex-end;z-index:50}
+.panel{width:min(400px,96vw);background:var(--card-bg);height:100%;padding:18px;overflow-y:auto}
+.panel h2{font-family:var(--base-font-family);font-size:calc(var(--base-font-size) + 4px);font-weight:600;margin-bottom:12px;color:var(--accent-color)}
+.field{margin-bottom:11px}
+.field label{display:block;font-size:calc(var(--base-font-size) - 3px);color:var(--subtext-color);margin-bottom:4px}
+.field input, .field select, .login-card input{width:100%;background:var(--bg-color);border:1px solid var(--border-color);border-radius:8px;padding:9px 11px;color:var(--text-color)}
+.login-card input { margin-bottom: 12px; }
+.field input[readonly]{opacity:0.7;}
+.color-field{display:flex;align-items:center;gap:10px;}
+.color-field input[type="color"]{width:40px;height:35px;padding:2px;cursor:pointer;}
+.btn{width:100%;padding:11px;border:none;border-radius:8px;font-weight:500;cursor:pointer;margin-top:8px;font-family:var(--base-font-family);font-size:var(--base-font-size);}
+.btn-primary{background:var(--accent-color);color:var(--bg-color);font-weight:600}
+.btn-secondary{background:transparent;border:1px solid var(--border-color);color:var(--text-color)}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--card-bg);border:1px solid var(--accent-color);padding:10px 16px;border-radius:8px;font-size:calc(var(--base-font-size) - 1px);display:none;z-index:60}
+.bal-due{color:var(--due-color);font-weight:600;}
+.bal-clear{color:var(--paid-color);font-weight:600;}
+
+.section-head {
+  font-size: calc(var(--base-font-size) - 3px);
+  color: var(--accent-color);
+  font-weight: 600;
+  margin-top: 14px;
+  margin-bottom: 8px;
+  letter-spacing: 0.5px;
+}
+.dashboard-stats-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--base-font-family);
+  font-size: calc(var(--base-font-size) - 2px);
+  color: var(--accent-color);
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+.btn-toggle-stats {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  color: var(--subtext-color);
+  font-size: calc(var(--base-font-size) - 4px);
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: var(--base-font-family);
+}
+.btn-toggle-stats:hover { border-color: var(--accent-color); color: var(--text-color); }
+.type-summary-row {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  margin-bottom: 12px;
+  padding-bottom: 4px;
+}
+.type-summary-pill {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: calc(var(--base-font-size) - 3px);
+  white-space: nowrap;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-family: var(--base-font-family);
+}
+.type-summary-pill span { color: var(--subtext-color); font-family: var(--base-font-family); }
+.type-summary-pill .count { color: var(--accent-color); font-weight: 600; }
+</style>
+</head>
+<body>
+
+<!-- Login Screen Overlay -->
+<div id="loginScreen">
+  <div class="login-card">
+    <h2>Emirance</h2>
+    <p>Please sign in to continue</p>
+    <div style="text-align:left;" class="field"><label>Username</label><input type="text" id="loginUser" placeholder="Enter username"></div>
+    <div style="text-align:left;" class="field"><label>Password</label><input type="password" id="loginPass" placeholder="Enter password"></div>
+    <button class="btn btn-primary" onclick="handleLogin()">Login</button>
+  </div>
+</div>
+
+<header>
+  <div class="sub-header-container">
+    <div id="subHeaderDisplay" class="logo-sub">FRONT DESK · ROOM REGISTRY</div>
+  </div>
+
+  <div class="header-bottom-row" id="headerBottomRow">
+    <div class="header-left">
+      <img id="logoDisplay" class="logo-img" alt="Logo">
+    </div>
+    <div class="header-center">
+      <h1 id="mainTitleDisplay"></h1>
+    </div>
+    <div class="header-right">
+      <button id="adminBtn" class="btn-menu unlocked" onclick="handleAdminClick()" title="Settings">☰</button>
+      <button id="lockBtn" class="btn-lock" onclick="lockAdmin()">🔒 Lock</button>
+    </div>
+  </div>
+</header>
+
+<main id="main"></main>
+
+<!-- Bed Details Overlay -->
+<div id="overlay" class="overlay" onclick="closePanel()">
+  <div class="panel" onclick="event.stopPropagation()">
+    <button class="back" onclick="closePanel()">← Close</button>
+    <h2 id="panelTitle">Bed Details</h2>
+    <div class="field"><label id="lblFType">Bed Type</label>
+      <select id="fBedType" onchange="onBedTypeChange()"></select>
+    </div>
+    <div class="field"><label id="lblFName">Name</label><input id="fName"></div>
+    <div class="field"><label id="lblFPhone">Phone</label><input id="fPhone"></div>
+    
+    <div class="field"><label id="lblFRent">Rent (₹)</label><input id="fRent" type="number" oninput="updateBalance()"></div>
+    <div class="field"><label id="lblFPaid">Rent Paid (₹)</label><input id="fPaid" type="number" oninput="updateBalance()"></div>
+    <div class="field"><label id="lblFBalance">Rent Balance (₹)</label><input id="fBalance" type="number" readonly></div>
+
+    <div class="field"><label id="lblFDep">Deposit (₹)</label><input id="fDep" type="number" oninput="updateBalance()"></div>
+    <div class="field"><label id="lblFDepPaid">Deposit Paid (₹)</label><input id="fDepPaid" type="number" oninput="updateBalance()"></div>
+    <div class="field"><label id="lblFDepBalance">Deposit Balance (₹)</label><input id="fDepBalance" type="number" readonly></div>
+
+    <div class="field"><label id="lblFComm">Commission (₹)</label><input id="fComm" type="number" oninput="updateBalance()"></div>
+    <div class="field"><label id="lblFCommPaid">Commission Paid (₹)</label><input id="fCommPaid" type="number" oninput="updateBalance()"></div>
+    <div class="field"><label id="lblFCommBalance">Commission Balance (₹)</label><input id="fCommBalance" type="number" readonly></div>
+
+    <!-- Overall Summary inside Bed Details Panel -->
+    <div class="section-summary-box" style="margin-top: 14px;">
+      <div class="section-summary-title">TOTAL OVERALL SUMMARY</div>
+      <div class="section-summary-grid">
+        <div><span>TOTAL</span><b id="panelTotSum">₹0</b></div>
+        <div><span>PAID</span><b id="panelPaidSum" class="bal-clear">₹0</b></div>
+        <div><span>BALANCE</span><b id="panelBalSum" class="bal-due">₹0</b></div>
+      </div>
+    </div>
+
+    <div class="field" style="margin-top:12px;"><label id="lblFJoin">Join Date</label><input id="fJoin" type="date"></div>
+    <div class="field"><label id="lblFEnd">End Date</label><input id="fEnd" type="date"></div>
+    <button class="btn btn-primary" id="btnSave" onclick="save()">Save / Update</button>
+    <button class="btn btn-secondary" id="btnClear" onclick="clearBed()">Clear Bed</button>
+  </div>
+</div>
+
+<!-- Settings / Admin Panel Overlay -->
+<div id="adminOverlay" class="overlay" onclick="closeAdminPanel()">
+  <div class="panel" onclick="event.stopPropagation()">
+    <button class="back" onclick="closeAdminPanel()">← Close Settings</button>
+    <h2>Settings & Structure</h2>
+    
+    <div style="border-bottom:1px solid var(--border-color);padding-bottom:12px;margin-bottom:12px;background:rgba(201,164,92,0.05);padding:10px;border-radius:6px;">
+      <p class="section-head" style="margin-top:0;">ACCESS MODE (ADMIN / VIEWER)</p>
+      <div class="field">
+        <label>Current Permission Mode</label>
+        <select id="cfgAccessMode" onchange="promptPinForAccess(this.value)">
+          <option value="editor">Editor (Full Access & Edit)</option>
+          <option value="viewer">Viewer (Partial Lock)</option>
+        </select>
+      </div>
+    </div>
+
+    <div style="border-bottom:1px solid var(--border-color);padding-bottom:12px;margin-bottom:12px;">
+      <p class="section-head">BED TYPES, RATES, DEPOSITS & COMMISSION</p>
+      <div id="bedTypesConfigContainer"></div>
+      
+      <div style="margin-top:10px;background:rgba(255,255,255,0.02);border:1px solid var(--border-color);padding:10px;border-radius:8px;">
+        <div class="field" style="margin-bottom:8px;"><label>New Bed Type Name</label><input id="newBedTypeName" type="text" placeholder="e.g. Deluxe Bed"></div>
+        <div class="field" style="margin-bottom:8px;"><label>Default Rent (₹)</label><input id="newBedTypeRate" type="number" placeholder="e.g. 2500"></div>
+        <div class="field" style="margin-bottom:8px;"><label>Default Deposit (₹)</label><input id="newBedTypeDep" type="number" placeholder="e.g. 1000"></div>
+        <div class="field" style="margin-bottom:10px;"><label>Default Commission (₹)</label><input id="newBedTypeComm" type="number" placeholder="e.g. 500"></div>
+        <button class="btn btn-primary" style="margin-top:0;" onclick="addNewBedType()">+ Add Bed Type</button>
+      </div>
+
+      <button class="btn btn-secondary" style="margin-top:10px;" onclick="saveBedRates()">Apply Bed Rates, Deposits & Commission</button>
+    </div>
+
+    <div style="border-bottom:1px solid var(--border-color);padding-bottom:12px;margin-bottom:12px;">
+      <p class="section-head">FONT & TYPOGRAPHY</p>
+      <div class="field">
+        <label>Font Family</label>
+        <select id="cfgFontFamily">
+          <option value="'IBM Plex Sans', sans-serif">IBM Plex Sans (Default)</option>
+          <option value="'Poppins', sans-serif">Poppins</option>
+          <option value="'Roboto', sans-serif">Roboto</option>
+          <option value="Arial, sans-serif">Arial</option>
+          <option value="'Times New Roman', serif">Times New Roman</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Base Font Size (px)</label>
+        <input id="cfgFontSize" type="number" min="10" max="22" value="14">
+      </div>
+      <button class="btn btn-primary" onclick="saveTypography()">Apply Font & Size</button>
+    </div>
+
+    <div style="border-bottom:1px solid var(--border-color);padding-bottom:12px;margin-bottom:12px;">
+      <p class="section-head">THEME & COLORS</p>
+      <div class="field color-field"><label>Background Color</label><input id="clrBg" type="color"></div>
+      <div class="field color-field"><label>Card Background</label><input id="clrCard" type="color"></div>
+      <div class="field color-field"><label>Accent Gold/Primary</label><input id="clrAccent" type="color"></div>
+      <div class="field color-field"><label>Main Text Color</label><input id="clrText" type="color"></div>
+      <div class="field color-field"><label>Pending / Due Color</label><input id="clrDue" type="color"></div>
+      <div class="field color-field"><label>Paid / Clear Color</label><input id="clrPaid" type="color"></div>
+      <button class="btn btn-primary" onclick="saveColors()">Apply Colors</button>
+    </div>
+
+    <div style="border-bottom:1px solid var(--border-color);padding-bottom:12px;margin-bottom:12px;">
+      <p class="section-head">GLOBAL STRUCTURE</p>
+      <div class="field"><label>Total Floors Count</label><input id="cfgFloorsCount" type="number" min="1" max="20"></div>
+      <button class="btn btn-primary" onclick="saveGlobalStructure()">Apply Total Floors</button>
+    </div>
+
+    <div style="border-bottom:1px solid var(--border-color);padding-bottom:12px;margin-bottom:12px;">
+      <p class="section-head">ROOM & BED SETUP (PER FLOOR & MAIN ROOM)</p>
+      <div class="field">
+        <label>Select Floor to Configure</label>
+        <select id="selConfigFloor" onchange="loadFloorConfigOptions()">
+          <option value="1">Floor 1</option>
+        </select>
+      </div>
+      <div class="field"><label>Main Rooms in this Floor</label><input id="cfgMainsPerFloor" type="number" min="1" max="30" onchange="updateMainRoomSelector()"></div>
+      
+      <div class="field">
+        <label>Select Specific Main Room to Configure</label>
+        <select id="selConfigMain" onchange="loadMainRoomConfigOptions()">
+          <option value="1">Main Room 1</option>
+        </select>
+      </div>
+      <div class="field"><label>Apartments in this Main Room</label><input id="cfgAptsPerMain" type="number" min="1" max="10" onchange="updateAptSelector()"></div>
+
+      <div class="field">
+        <label>Select Specific Apartment to Configure</label>
+        <select id="selConfigApt" onchange="loadAptConfigOptions()">
+          <option value="1">Apartment 1</option>
+        </select>
+      </div>
+      <div class="field"><label>Beds in this Apartment</label><input id="cfgBedsPerApt" type="number" min="1" max="30"></div>
+
+      <button class="btn btn-primary" onclick="saveDetailedStructure()">Save This Floor & Room Setup</button>
+    </div>
+
+    <div style="border-bottom:1px solid var(--border-color);padding-bottom:12px;margin-bottom:12px;">
+      <p class="section-head">LEVEL NAMES CUSTOMIZATION</p>
+      <div class="field"><label>Floor Level Title</label><input id="lvlFloor" type="text"></div>
+      <div class="field"><label>Main Room Level Title</label><input id="lvlMain" type="text"></div>
+      <div class="field"><label>Apartment Level Title</label><input id="lvlApt" type="text"></div>
+      <div class="field"><label>Bed Level General Title</label><input id="lvlBed" type="text"></div>
+      <button class="btn btn-primary" onclick="saveLevelNames()">Save Level Titles</button>
+    </div>
+
+    <div style="border-bottom:1px solid var(--border-color);padding-bottom:12px;margin-bottom:12px;">
+      <p class="section-head">APP LOGIN CREDENTIALS (USER)</p>
+      <div class="field"><label>Login Username</label><input id="cfgLoginUsername" type="text" placeholder="Username for app start"></div>
+      <div class="field"><label>Login Password</label><input id="cfgLoginPassword" type="password" placeholder="Password for app start"></div>
+      <button class="btn btn-secondary" onclick="updateLoginCredentials()">Update App Login Info</button>
+    </div>
+
+    <div>
+      <p class="section-head">ADMIN / MASTER CREDENTIALS</p>
+      <div class="field"><label>Admin Master Password (Strong)</label><input id="cfgAdminPassword" type="password" placeholder="Strong master password"></div>
+      <button class="btn btn-secondary" onclick="updateAdminCredentials()">Update Admin Password</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+const NAMES = ["Anjali","Rahul","Priya","Suresh","Meera","Arun","Lakshmi","Vishnu","Divya","Sanjay","Kavya","Nikhil","Sneha","Arjun","Deepa"];
+
+let config = {
+  floors: 5,
+  rates: { 
+    "Lower Bed": { rent: 2000, dep: 1000, comm: 500 }, 
+    "Upper Bed": { rent: 1800, dep: 900, comm: 500 }, 
+    "Executive Bed": { rent: 3000, dep: 1500, comm: 500 } 
+  },
+  username: "user",
+  password: "user123",     
+  adminPin: "admin987",    
+  fontFamily: "'IBM Plex Sans', sans-serif",
+  fontSize: 14,
+  structure: { mainsPerFloor: {}, aptsPerMain: {}, bedsPerApt: {} },
+  colors: { bg: "#1B2430", card: "#232E3D", accent: "#C9A45C", text: "#EDE6D8", due: "#E74C3C", paid: "#2ECC71" },
+  levels: { floor: "Floor", main: "Main Room", apt: "Apartment", bed: "Bed" },
+  bedNames: {},
+  labels: { totalBeds: "TOTAL BEDS", occupied: "OCCUPIED", available: "AVAILABLE" }
+};
+
+let isAdmin = true; 
+let showMainStats = true;
+let showAptStats = true;
+let showFloorStats = true;
+let customNames = {}; 
+let beds = {}; 
+let view = {level:"dashboard", floor:null, main:null, apt:null};
+let selected = null;
+
+// ---------------- Supabase Setup ----------------
+// 1. Create a free project at https://supabase.com
+// 2. Go to Project Settings -> API and copy your Project URL + anon public key below
+const SUPABASE_URL = "https://hmginnifwpxvwyrzsgue.supabase.co";       // TODO: replace
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhtZ2lubmlmd3B4dnd5cnpzZ3VlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUzNDUxMjQsImV4cCI6MjEwMDkyMTEyNH0.bZUfh92hzAmt91Azu07Is_uS62uomj9tDZoV0LoW2Lk";                  // TODO: replace
+
+const supabaseClient = (SUPABASE_URL.includes("YOUR-PROJECT-REF"))
+  ? null
+  : window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const STATE_ROW_ID = 1; // single shared row holding the whole app's data
+
+function isEditingActive(){
+  const overlay = document.getElementById("overlay");
+  const adminOverlay = document.getElementById("adminOverlay");
+  return (overlay && overlay.style.display === "flex") || (adminOverlay && adminOverlay.style.display === "flex");
+}
+
+function applyData(data){
+  if(data.config) {
+    config = data.config;
+    if(!config.password) config.password = "user123";
+    if(!config.adminPin) config.adminPin = "admin987";
+    for(let t in config.rates){
+      if(typeof config.rates[t] === 'number'){
+        config.rates[t] = { rent: config.rates[t], dep: Math.round(config.rates[t]*0.5), comm: 500 };
+      }
+      if(config.rates[t].comm === undefined){
+        config.rates[t].comm = 500;
+      }
+    }
+  }
+  if(data.customNames) customNames = data.customNames;
+  if(data.beds) {
+    beds = data.beds;
+    for(let k in beds){
+      if(beds[k].dep === undefined) beds[k].dep = 0;
+      if(beds[k].depPaid === undefined) beds[k].depPaid = 0;
+      if(beds[k].comm === undefined) beds[k].comm = 0;
+      if(beds[k].commPaid === undefined) beds[k].commPaid = 0;
+    }
+  }
+  if(data.isAdmin !== undefined) isAdmin = data.isAdmin;
+}
+
+function loadFromLocalCache(){
+  const saved = localStorage.getItem("emirance_app_data_v3");
+  if(saved){
+    try{ applyData(JSON.parse(saved)); }catch(e){}
+  }
+}
+
+async function loadFromStorage(){
+  // Instant paint from the last known local copy (also works offline)
+  loadFromLocalCache();
+
+  if(!supabaseClient){
+    console.warn("Supabase not configured yet - set SUPABASE_URL / SUPABASE_ANON_KEY. Using local storage only.");
+    return;
+  }
+
+  try{
+    const { data: row, error } = await supabaseClient
+      .from('app_state')
+      .select('data')
+      .eq('id', STATE_ROW_ID)
+      .maybeSingle();
+
+    if(error) throw error;
+
+    if(row && row.data && Object.keys(row.data).length){
+      applyData(row.data);
+    } else {
+      // Nothing in Supabase yet: seed some demo data once, then push it up
+      seed();
+      await saveToStorage();
+    }
+  }catch(e){
+    console.error("Could not reach Supabase, using local data instead.", e);
+  }
+}
+
+async function saveToStorage(){
+  const data = { config, customNames, beds, isAdmin };
+  localStorage.setItem("emirance_app_data_v3", JSON.stringify(data)); // offline cache
+
+  if(!supabaseClient) return;
+
+  try{
+    const { error } = await supabaseClient
+      .from('app_state')
+      .upsert({ id: STATE_ROW_ID, data, updated_at: new Date().toISOString() });
+    if(error) console.error("Supabase save error:", error);
+  }catch(e){
+    console.error("Supabase save failed:", e);
+  }
+}
+
+function subscribeRealtime(){
+  if(!supabaseClient) return;
+  supabaseClient
+    .channel('app_state_sync')
+    .on('postgres_changes',
+      { event: '*', schema: 'public', table: 'app_state', filter: `id=eq.${STATE_ROW_ID}` },
+      (payload) => {
+        if(!payload.new || !payload.new.data) return;
+        if(isEditingActive()) return; // don't yank a form out from under someone typing
+        applyData(payload.new.data);
+        render();
+      }
+    )
+    .subscribe();
+}
+
+function handleLogin(){
+  const u = document.getElementById("loginUser").value.trim();
+  const p = document.getElementById("loginPass").value.trim();
+  
+  if(u === config.username && p === config.password){
+    document.getElementById("loginScreen").style.display = "none";
+    showToast("Login Successful");
+  } else {
+    alert("Invalid Username or Password!");
+  }
+}
+
+function getMainsCount(f) { return config.structure.mainsPerFloor[f] || 3; }
+function getAptsCount(f, m) { return config.structure.aptsPerMain[`${f}-${m}`] || 2; }
+function getBedsCount(f, m, a) { return config.structure.bedsPerApt[`${f}-${m}-${a}`] || 4; }
+
+function key(f,m,a,b){ return f+"-"+m+"-"+a+"-"+b; }
+
+function getBed(f,m,a,b){
+  const k = key(f,m,a,b);
+  if(!beds[k]){
+    const defaultType = Object.keys(config.rates)[0] || "Lower Bed";
+    const rObj = config.rates[defaultType] || { rent: 2000, dep: 1000, comm: 500 };
+    beds[k] = {
+      name:"", phone:"", bedType: defaultType, 
+      rent: rObj.rent, paid: 0, 
+      dep: rObj.dep, depPaid: 0, 
+      comm: rObj.comm, commPaid: 0, 
+      join:"", end:""
+    };
+  }
+  return beds[k];
+}
+
+function getBedLabel(f,m,a,b){ 
+  const bKey = key(f,m,a,b);
+  return customNames['bed-'+bKey] || config.bedNames[b] || (config.levels.bed + ' ' + b); 
+}
+
+function seed(){
+  const rateKeys = Object.keys(config.rates);
+  for(let f=1; f<=config.floors; f++){
+    const mains = getMainsCount(f);
+    for(let m=1; m<=mains; m++){
+      const apts = getAptsCount(f, m);
+      for(let a=1; a<=apts; a++){
+        const bCount = getBedsCount(f, m, a);
+        for(let b=1; b<=bCount; b++){
+          if(Math.random() < 0.20){
+            const bed = getBed(f,m,a,b);
+            if(!bed.name){
+              bed.name = NAMES[Math.floor(Math.random()*NAMES.length)];
+              bed.phone = "98"+Math.floor(10000000+Math.random()*89999999);
+              bed.bedType = rateKeys[(b - 1) % rateKeys.length];
+              const rObj = config.rates[bed.bedType] || { rent: 2000, dep: 1000, comm: 500 };
+              bed.rent = rObj.rent;
+              bed.paid = Math.random()>0.3 ? bed.rent : Math.floor(bed.rent*0.6);
+              bed.dep = rObj.dep;
+              bed.depPaid = Math.random()>0.4 ? bed.dep : 0;
+              bed.comm = rObj.comm;
+              bed.commPaid = rObj.comm;
+              bed.join = "2026-0"+(1+Math.floor(Math.random()*6))+"-"+String(1+Math.floor(Math.random()*28)).padStart(2,"0");
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+function getTotalBeds(){
+  let total = 0;
+  for(let f=1; f<=config.floors; f++){
+    const mains = getMainsCount(f);
+    for(let m=1; m<=mains; m++){
+      const apts = getAptsCount(f, m);
+      for(let a=1; a<=apts; a++){
+        total += getBedsCount(f, m, a);
+      }
+    }
+  }
+  return total;
+}
+
+function countOccupied(f,m,a){
+  let c=0;
+  const bCount = getBedsCount(f,m,a);
+  for(let b=1; b<=bCount; b++){ if(getBed(f,m,a,b).name) c++; }
+  return c;
+}
+
+function calculateBedTotals(bed){
+  const rent = Number(bed.rent) || 0;
+  const paid = Number(bed.paid) || 0;
+  const dep = Number(bed.dep) || 0;
+  const depPaid = Number(bed.depPaid) || 0;
+  const comm = Number(bed.comm) || 0;
+  const commPaid = Number(bed.commPaid) || 0;
+
+  return { 
+    rentTotal: rent, rentPaid: paid, rentPending: rent - paid,
+    depTotal: dep, depPaid: depPaid, depPending: dep - depPaid,
+    commTotal: comm, commPaid: commPaid, commPending: comm - commPaid
+  };
+}
+
+function getBedTypeFinancials(){
+  let typeData = {};
+  for(let type in config.rates){
+    typeData[type] = { count: 0, rentTot: 0, rentPd: 0, rentPen: 0, depTot: 0, depPd: 0, depPen: 0, commTot: 0, commPd: 0, commPen: 0 };
+  }
+  for(let f=1; f<=config.floors; f++){
+    const mains = getMainsCount(f);
+    for(let m=1; m<=mains; m++){
+      const apts = getAptsCount(f, m);
+      for(let a=1; a<=apts; a++){
+        const bCount = getBedsCount(f, m, a);
+        for(let b=1; b<=bCount; b++){
+          const bed = getBed(f, m, a, b);
+          let type = bed.bedType;
+          if(!typeData[type]){
+            typeData[type] = { count: 0, rentTot: 0, rentPd: 0, rentPen: 0, depTot: 0, depPd: 0, depPen: 0, commTot: 0, commPd: 0, commPen: 0 };
+          }
+          typeData[type].count++;
+          let fin = calculateBedTotals(bed);
+          typeData[type].rentTot += fin.rentTotal; typeData[type].rentPd += fin.rentPaid; typeData[type].rentPen += fin.rentPending;
+          typeData[type].depTot += fin.depTotal; typeData[type].depPd += fin.depPaid; typeData[type].depPen += fin.depPending;
+          typeData[type].commTot += fin.commTotal; typeData[type].commPd += fin.commPaid; typeData[type].commPen += fin.commPending;
+        }
+      }
+    }
+  }
+  return typeData;
+}
+
+function getMainRoomBedTypeFinancials(f, m){
+  let typeData = {};
+  for(let type in config.rates){
+    typeData[type] = { count: 0, rentTot: 0, rentPd: 0, rentPen: 0, depTot: 0, depPd: 0, depPen: 0, commTot: 0, commPd: 0, commPen: 0 };
+  }
+  const apts = getAptsCount(f, m);
+  for(let a=1; a<=apts; a++){
+    const bCount = getBedsCount(f, m, a);
+    for(let b=1; b<=bCount; b++){
+      const bed = getBed(f, m, a, b);
+      let type = bed.bedType;
+      if(!typeData[type]){
+        typeData[type] = { count: 0, rentTot: 0, rentPd: 0, rentPen: 0, depTot: 0, depPd: 0, depPen: 0, commTot: 0, commPd: 0, commPen: 0 };
+      }
+      typeData[type].count++;
+      let fin = calculateBedTotals(bed);
+      typeData[type].rentTot += fin.rentTotal; typeData[type].rentPd += fin.rentPaid; typeData[type].rentPen += fin.rentPending;
+      typeData[type].depTot += fin.depTotal; typeData[type].depPd += fin.depPaid; typeData[type].depPen += fin.depPending;
+      typeData[type].commTot += fin.commTotal; typeData[type].commPd += fin.commPaid; typeData[type].commPen += fin.commPending;
+    }
+  }
+  return typeData;
+}
+
+function getAptBedTypeFinancials(f, m, a){
+  let typeData = {};
+  for(let type in config.rates){
+    typeData[type] = { count: 0, rentTot: 0, rentPd: 0, rentPen: 0, depTot: 0, depPd: 0, depPen: 0, commTot: 0, commPd: 0, commPen: 0 };
+  }
+  const bCount = getBedsCount(f, m, a);
+  for(let b=1; b<=bCount; b++){
+    const bed = getBed(f, m, a, b);
+    let type = bed.bedType;
+    if(!typeData[type]){
+      typeData[type] = { count: 0, rentTot: 0, rentPd: 0, rentPen: 0, depTot: 0, depPd: 0, depPen: 0, commTot: 0, commPd: 0, commPen: 0 };
+    }
+    typeData[type].count++;
+    let fin = calculateBedTotals(bed);
+    typeData[type].rentTot += fin.rentTotal; typeData[type].rentPd += fin.rentPaid; typeData[type].rentPen += fin.rentPending;
+    typeData[type].depTot += fin.depTotal; typeData[type].depPd += fin.depPaid; typeData[type].depPen += fin.depPending;
+    typeData[type].commTot += fin.commTotal; typeData[type].commPd += fin.commPaid; typeData[type].commPen += fin.commPending;
+  }
+  return typeData;
+}
+
+function getFloorBedTypeFinancials(f){
+  let typeData = {};
+  for(let type in config.rates){
+    typeData[type] = { count: 0, rentTot: 0, rentPd: 0, rentPen: 0, depTot: 0, depPd: 0, depPen: 0, commTot: 0, commPd: 0, commPen: 0 };
+  }
+  const mains = getMainsCount(f);
+  for(let m=1; m<=mains; m++){
+    const apts = getAptsCount(f, m);
+    for(let a=1; a<=apts; a++){
+      const bCount = getBedsCount(f, m, a);
+      for(let b=1; b<=bCount; b++){
+        const bed = getBed(f, m, a, b);
+        let type = bed.bedType;
+        if(!typeData[type]){
+          typeData[type] = { count: 0, rentTot: 0, rentPd: 0, rentPen: 0, depTot: 0, depPd: 0, depPen: 0, commTot: 0, commPd: 0, commPen: 0 };
+        }
+        typeData[type].count++;
+        let fin = calculateBedTotals(bed);
+        typeData[type].rentTot += fin.rentTotal; typeData[type].rentPd += fin.rentPaid; typeData[type].rentPen += fin.rentPending;
+        typeData[type].depTot += fin.depTotal; typeData[type].depPd += fin.depPaid; typeData[type].depPen += fin.depPending;
+        typeData[type].commTot += fin.commTotal; typeData[type].commPd += fin.commPaid; typeData[type].commPen += fin.commPending;
+      }
+    }
+  }
+  return typeData;
+}
+
+function getAptFinancials(f,m,a){
+  let rentTot = 0, rentPd = 0, rentPen = 0;
+  let depTot = 0, depPd = 0, depPen = 0;
+  let commTot = 0, commPd = 0, commPen = 0;
+  
+  const bCount = getBedsCount(f,m,a);
+  for(let b=1; b<=bCount; b++){
+    const bed = getBed(f,m,a,b);
+    const fin = calculateBedTotals(bed);
+    rentTot += fin.rentTotal; rentPd += fin.rentPaid; rentPen += fin.rentPending;
+    depTot += fin.depTotal; depPd += fin.depPaid; depPen += fin.depPending;
+    commTot += fin.commTotal; commPd += fin.commPaid; commPen += fin.commPending;
+  }
+  return { rentTot, rentPd, rentPen, depTot, depPd, depPen, commTot, commPd, commPen };
+}
+
+function getMainRoomFinancials(f,m){
+  let rentTot = 0, rentPd = 0, rentPen = 0;
+  let depTot = 0, depPd = 0, depPen = 0;
+  let commTot = 0, commPd = 0, commPen = 0;
+
+  const apts = getAptsCount(f, m);
+  for(let a=1; a<=apts; a++){
+    const fin = getAptFinancials(f,m,a);
+    rentTot += fin.rentTot; rentPd += fin.rentPd; rentPen += fin.rentPen;
+    depTot += fin.depTot; depPd += fin.depPd; depPen += fin.depPen;
+    commTot += fin.commTot; commPd += fin.commPd; commPen += fin.commPen;
+  }
+  return { rentTot, rentPd, rentPen, depTot, depPd, depPen, commTot, commPd, commPen };
+}
+
+function getFloorFinancials(f){
+  let rentTot = 0, rentPd = 0, rentPen = 0;
+  let depTot = 0, depPd = 0, depPen = 0;
+  let commTot = 0, commPd = 0, commPen = 0;
+
+  const mains = getMainsCount(f);
+  for(let m=1; m<=mains; m++){
+    const fin = getMainRoomFinancials(f, m);
+    rentTot += fin.rentTot; rentPd += fin.rentPd; rentPen += fin.rentPen;
+    depTot += fin.depTot; depPd += fin.depPd; depPen += fin.depPen;
+    commTot += fin.commTot; commPd += fin.commPd; commPen += fin.commPen;
+  }
+  return { rentTot, rentPd, rentPen, depTot, depPd, depPen, commTot, commPd, commPen };
+}
+
+function getGlobalFinancials(){
+  let rentTot = 0, rentPd = 0, rentPen = 0;
+  let depTot = 0, depPd = 0, depPen = 0;
+  let commTot = 0, commPd = 0, commPen = 0;
+
+  for(let f=1; f<=config.floors; f++){
+    const fin = getFloorFinancials(f);
+    rentTot += fin.rentTot; rentPd += fin.rentPd; rentPen += fin.rentPen;
+    depTot += fin.depTot; depPd += fin.depPd; depPen += fin.depPen;
+    commTot += fin.commTot; commPd += fin.commPd; commPen += fin.commPen;
+  }
+  return { rentTot, rentPd, rentPen, depTot, depPd, depPen, commTot, commPd, commPen };
+}
+
+function toggleMainStatsVisibility(){ showMainStats = !showMainStats; render(); }
+function toggleAptStatsVisibility(){ showAptStats = !showAptStats; render(); }
+function toggleFloorStatsVisibility(){ showFloorStats = !showFloorStats; render(); }
+
+function updateAdminUIState(){
+  const adminBtn = document.getElementById("adminBtn");
+  const lockBtn = document.getElementById("lockBtn");
+  if(isAdmin){
+    adminBtn.classList.add("unlocked");
+    lockBtn.style.display = "inline-block";
+  } else {
+    adminBtn.classList.remove("unlocked");
+    lockBtn.style.display = "none";
+  }
+}
+
+function handleAdminClick(){
+  if(!isAdmin){
+    const enteredPass = prompt("Enter Admin Master Password:");
+    if(enteredPass === config.adminPin){
+      isAdmin = true;
+      updateAdminUIState();
+      saveToStorage();
+      showToast("Unlocked Editor Mode");
+      openAdminPanel();
+    } else if(enteredPass !== null) {
+      alert("Incorrect Admin Password!");
+    }
+  } else {
+    openAdminPanel();
+  }
+}
+
+function lockAdmin(){
+  isAdmin = false;
+  updateAdminUIState();
+  saveToStorage();
+  showToast("Switched to Partial Lock Mode");
+  render();
+}
+
+function promptPinForAccess(mode){
+  if(mode === "editor"){
+    const enteredPass = prompt("Enter Admin Master Password to switch to Editor mode:");
+    if(enteredPass === config.adminPin){
+      isAdmin = true;
+      updateAdminUIState();
+      saveToStorage();
+      showToast("Switched to Editor Mode");
+      render();
+    } else {
+      alert("Incorrect Admin Password!");
+      document.getElementById("cfgAccessMode").value = "viewer";
+    }
+  } else {
+    isAdmin = false;
+    updateAdminUIState();
+    saveToStorage();
+    showToast("Switched to Partial Lock Mode");
+    render();
+  }
+}
+
+function openAdminPanel(){
+  document.getElementById("cfgAccessMode").value = isAdmin ? "editor" : "viewer";
+  renderBedTypeRatesInputs();
+  
+  document.getElementById("clrBg").value = config.colors.bg;
+  document.getElementById("clrCard").value = config.colors.card;
+  document.getElementById("clrAccent").value = config.colors.accent;
+  document.getElementById("clrText").value = config.colors.text;
+  document.getElementById("clrDue").value = config.colors.due;
+  document.getElementById("clrPaid").value = config.colors.paid;
+  document.getElementById("cfgFontFamily").value = config.fontFamily;
+  document.getElementById("cfgFontSize").value = config.fontSize;
+  document.getElementById("cfgFloorsCount").value = config.floors;
+  document.getElementById("lvlFloor").value = config.levels.floor;
+  document.getElementById("lvlMain").value = config.levels.main;
+  document.getElementById("lvlApt").value = config.levels.apt;
+  document.getElementById("lvlBed").value = config.levels.bed;
+  
+  document.getElementById("cfgLoginUsername").value = config.username || "user";
+  document.getElementById("cfgLoginPassword").value = "";
+  document.getElementById("cfgAdminPassword").value = "";
+
+  const sel = document.getElementById("selConfigFloor");
+  sel.innerHTML = "";
+  for(let f=1; f<=config.floors; f++){
+    sel.innerHTML += `<option value="${f}">Floor ${f}</option>`;
+  }
+  loadFloorConfigOptions();
+  document.getElementById("adminOverlay").style.display = "flex";
+}
+
+function renderBedTypeRatesInputs(){
+  let container = document.getElementById("bedTypesConfigContainer");
+  container.innerHTML = "";
+  for(let type in config.rates){
+    let rObj = config.rates[type] || { rent: 2000, dep: 1000, comm: 500 };
+    container.innerHTML += `
+      <div style="background:rgba(255,255,255,0.02);border:1px solid var(--border-color);padding:10px;border-radius:8px;margin-bottom:8px;">
+        <div class="field" style="margin-bottom:6px;"><label>Bed Type Name</label><input type="text" class="name-input-field" data-oldname="${type}" value="${type}"></div>
+        <div class="field" style="margin-bottom:6px;"><label>Default Rent (₹)</label><input type="number" class="rate-input-field" data-typename="${type}" value="${rObj.rent}"></div>
+        <div class="field" style="margin-bottom:6px;"><label>Default Deposit (₹)</label><input type="number" class="dep-input-field" data-typename="${type}" value="${rObj.dep}"></div>
+        <div class="field" style="margin-bottom:6px;"><label>Default Commission (₹)</label><input type="number" class="comm-input-field" data-typename="${type}" value="${rObj.comm}"></div>
+        <button class="btn btn-secondary" style="margin-top:0;background:rgba(231,76,60,0.15);color:var(--due-color);border-color:var(--due-color);padding:8px;" onclick="removeBedType('${type}')">Remove ${type}</button>
+      </div>`;
+  }
+}
+
+function addNewBedType(){
+  const nameInput = document.getElementById("newBedTypeName");
+  const rateInput = document.getElementById("newBedTypeRate");
+  const depInput = document.getElementById("newBedTypeDep");
+  const commInput = document.getElementById("newBedTypeComm");
+  const name = nameInput.value.trim();
+  const rate = Number(rateInput.value) || 0;
+  const dep = Number(depInput.value) || 0;
+  const comm = Number(commInput.value) || 0;
+  
+  if(!name){
+    alert("Please enter a bed type name.");
+    return;
+  }
+  if(config.rates[name] !== undefined){
+    alert("This bed type already exists!");
+    return;
+  }
+  
+  config.rates[name] = { rent: rate, dep: dep, comm: comm };
+  nameInput.value = "";
+  rateInput.value = "";
+  depInput.value = "";
+  commInput.value = "";
+  renderBedTypeRatesInputs();
+  showToast("Added new bed type");
+}
+
+function removeBedType(type){
+  if(Object.keys(config.rates).length <= 1){
+    alert("You must keep at least one bed type.");
+    return;
+  }
+  delete config.rates[type];
+  renderBedTypeRatesInputs();
+  showToast("Bed type removed");
+}
+
+function loadFloorConfigOptions(){
+  const f = Number(document.getElementById("selConfigFloor").value);
+  const mains = getMainsCount(f);
+  document.getElementById("cfgMainsPerFloor").value = mains;
+  updateMainRoomSelector();
+}
+
+function updateMainRoomSelector(){
+  const f = Number(document.getElementById("selConfigFloor").value);
+  const mains = Number(document.getElementById("cfgMainsPerFloor").value) || 1;
+  const selMain = document.getElementById("selConfigMain");
+  selMain.innerHTML = "";
+  for(let m=1; m<=mains; m++){
+    selMain.innerHTML += `<option value="${m}">Main Room ${m}</option>`;
+  }
+  loadMainRoomConfigOptions();
+}
+
+function loadMainRoomConfigOptions(){
+  const f = Number(document.getElementById("selConfigFloor").value);
+  const m = Number(document.getElementById("selConfigMain").value) || 1;
+  const apts = getAptsCount(f, m);
+  document.getElementById("cfgAptsPerMain").value = apts;
+  updateAptSelector();
+}
+
+function updateAptSelector(){
+  const f = Number(document.getElementById("selConfigFloor").value);
+  const m = Number(document.getElementById("selConfigMain").value) || 1;
+  const apts = Number(document.getElementById("cfgAptsPerMain").value) || 1;
+  const selApt = document.getElementById("selConfigApt");
+  selApt.innerHTML = "";
+  for(let a=1; a<=apts; a++){
+    selApt.innerHTML += `<option value="${a}">Apartment ${a}</option>`;
+  }
+  loadAptConfigOptions();
+}
+
+function loadAptConfigOptions(){
+  const f = Number(document.getElementById("selConfigFloor").value);
+  const m = Number(document.getElementById("selConfigMain").value) || 1;
+  const a = Number(document.getElementById("selConfigApt").value) || 1;
+  const bedsCount = getBedsCount(f, m, a);
+  document.getElementById("cfgBedsPerApt").value = bedsCount;
+}
+
+function closeAdminPanel(){ document.getElementById("adminOverlay").style.display = "none"; }
+
+function saveBedRates(){
+  const nameInputs = document.querySelectorAll(".name-input-field");
+  const rateInputs = document.querySelectorAll(".rate-input-field");
+  const depInputs = document.querySelectorAll(".dep-input-field");
+  const commInputs = document.querySelectorAll(".comm-input-field");
+  
+  let newRates = {};
+  let nameMapping = {};
+
+  nameInputs.forEach((inp, idx) => {
+    let oldName = inp.getAttribute("data-oldname");
+    let newName = inp.value.trim() || oldName;
+    let rateVal = Number(rateInputs[idx].value) || 0;
+    let depVal = Number(depInputs[idx].value) || 0;
+    let commVal = Number(commInputs[idx].value) || 0;
+    
+    newRates[newName] = { rent: rateVal, dep: depVal, comm: commVal };
+    nameMapping[oldName] = newName;
+  });
+
+  config.rates = newRates;
+
+  for(let k in beds){
+    if(nameMapping[beds[k].bedType]){
+      beds[k].bedType = nameMapping[beds[k].bedType];
+    }
+    if(config.rates[beds[k].bedType] !== undefined){
+      beds[k].rent = config.rates[beds[k].bedType].rent;
+      beds[k].dep = config.rates[beds[k].bedType].dep;
+      beds[k].comm = config.rates[beds[k].bedType].comm;
+    } else {
+      let firstKey = Object.keys(config.rates)[0];
+      beds[k].bedType = firstKey;
+      beds[k].rent = config.rates[firstKey].rent;
+      beds[k].dep = config.rates[firstKey].dep;
+      beds[k].comm = config.rates[firstKey].comm;
+    }
+  }
+
+  saveToStorage();
+  showToast("Bed Rates, Deposits & Commission Applied");
+  closeAdminPanel();
+  render();
+}
+
+function saveTypography(){
+  config.fontFamily = document.getElementById("cfgFontFamily").value;
+  config.fontSize = Number(document.getElementById("cfgFontSize").value) || 14;
+  applyTypography();
+  saveToStorage();
+  showToast("Font & Size Applied");
+  closeAdminPanel();
+}
+
+function applyTypography(){
+  const root = document.documentElement;
+  root.style.setProperty('--base-font-family', config.fontFamily);
+  root.style.setProperty('--base-font-size', config.fontSize + 'px');
+}
+
+function saveColors(){
+  config.colors.bg = document.getElementById("clrBg").value;
+  config.colors.card = document.getElementById("clrCard").value;
+  config.colors.accent = document.getElementById("clrAccent").value;
+  config.colors.text = document.getElementById("clrText").value;
+  config.colors.due = document.getElementById("clrDue").value;
+  config.colors.paid = document.getElementById("clrPaid").value;
+  applyThemeColors();
+  saveToStorage();
+  showToast("Theme Colors Saved");
+  closeAdminPanel();
+}
+
+function applyThemeColors(){
+  const root = document.documentElement;
+  root.style.setProperty('--bg-color', config.colors.bg);
+  root.style.setProperty('--card-bg', config.colors.card);
+  root.style.setProperty('--accent-color', config.colors.accent);
+  root.style.setProperty('--text-color', config.colors.text);
+  root.style.setProperty('--due-color', config.colors.due);
+  root.style.setProperty('--paid-color', config.colors.paid);
+}
+
+function saveGlobalStructure(){
+  config.floors = Number(document.getElementById("cfgFloorsCount").value) || 1;
+  saveToStorage();
+  showToast("Total Floors Count Applied");
+  closeAdminPanel();
+  render();
+}
+
+function saveDetailedStructure(){
+  const f = Number(document.getElementById("selConfigFloor").value);
+  const mains = Number(document.getElementById("cfgMainsPerFloor").value) || 1;
+  config.structure.mainsPerFloor[f] = mains;
+
+  const m = Number(document.getElementById("selConfigMain").value) || 1;
+  const apts = Number(document.getElementById("cfgAptsPerMain").value) || 1;
+  config.structure.aptsPerMain[`${f}-${m}`] = apts;
+
+  const a = Number(document.getElementById("selConfigApt").value) || 1;
+  const bedsCount = Number(document.getElementById("cfgBedsPerApt").value) || 1;
+  config.structure.bedsPerApt[`${f}-${m}-${a}`] = bedsCount;
+
+  saveToStorage();
+  showToast("Floor & Room Setup Saved Successfully");
+  closeAdminPanel();
+  render();
+}
+
+function saveLevelNames(){
+  config.levels.floor = document.getElementById("lvlFloor").value.trim() || "Floor";
+  config.levels.main = document.getElementById("lvlMain").value.trim() || "Main Room";
+  config.levels.apt = document.getElementById("lvlApt").value.trim() || "Apartment";
+  config.levels.bed = document.getElementById("lvlBed").value.trim() || "Bed";
+  saveToStorage();
+  showToast("Level Titles Updated");
+  closeAdminPanel();
+  render();
+}
+
+function updateBrandingDisplay(){
+  document.getElementById("subHeaderDisplay").style.display = "none";
+  const isDashboard = view.level === "dashboard";
+  document.getElementById("headerBottomRow").style.display = isDashboard ? "flex" : "none";
+  document.getElementById("mainTitleDisplay").textContent = "Emirance";
+  document.title = "Emirance";
+}
+
+function updateLoginCredentials(){
+  const currentAdminPass = prompt("Enter Admin Master Password to change user login details:");
+  if(currentAdminPass === config.adminPin){
+    const newUser = document.getElementById("cfgLoginUsername").value.trim();
+    const newPass = document.getElementById("cfgLoginPassword").value.trim();
+    
+    if(newUser && newPass.length >= 4){
+      config.username = newUser;
+      config.password = newPass;
+      document.getElementById("cfgLoginPassword").value = "";
+      saveToStorage();
+      showToast("App Login Credentials Updated");
+    } else {
+      alert("Username cannot be empty and Password must be at least 4 characters!");
+    }
+  } else if(currentAdminPass !== null){
+    alert("Incorrect Admin Master Password!");
+  }
+}
+
+function updateAdminCredentials(){
+  const currentAdminPass = prompt("Enter current Admin Master Password:");
+  if(currentAdminPass === config.adminPin){
+    const newAdminPass = document.getElementById("cfgAdminPassword").value.trim();
+    
+    if(newAdminPass.length >= 4){
+      if(newAdminPass === config.password){
+        alert("Admin password and User password cannot be the same for security reasons!");
+        return;
+      }
+      config.adminPin = newAdminPass;
+      document.getElementById("cfgAdminPassword").value = "";
+      saveToStorage();
+      showToast("Admin Master Password Updated Successfully");
+    } else {
+      alert("Admin Password must be at least 4 characters!");
+    }
+  } else if(currentAdminPass !== null){
+    alert("Incorrect current Admin Password!");
+  }
+}
+
+function editName(e, idKey, defaultVal){
+  e.stopPropagation();
+  if(!isAdmin) return;
+  const current = customNames[idKey] || defaultVal;
+  const val = prompt("Enter new name/number:", current);
+  if(val && val.trim().length > 0){
+    customNames[idKey] = val.trim();
+    saveToStorage();
+    showToast("Renamed Successfully");
+    render();
+  }
+}
+
+function getName(idKey, defaultVal){ return customNames[idKey] || defaultVal; }
+
+function onBedTypeChange(){
+  const type = document.getElementById("fBedType").value;
+  if(config.rates[type] !== undefined){
+    document.getElementById("fRent").value = config.rates[type].rent;
+    document.getElementById("fDep").value = config.rates[type].dep;
+    document.getElementById("fComm").value = config.rates[type].comm;
+    updateBalance();
+  }
+}
+
+function updateBalance(){
+  const rent = Number(document.getElementById("fRent").value) || 0;
+  const paid = Number(document.getElementById("fPaid").value) || 0;
+  const rBalElem = document.getElementById("fBalance");
+  rBalElem.value = rent - paid;
+  rBalElem.className = (rent - paid > 0) ? "bal-due" : "bal-clear";
+
+  const dep = Number(document.getElementById("fDep").value) || 0;
+  const depPaid = Number(document.getElementById("fDepPaid").value) || 0;
+  const dBalElem = document.getElementById("fDepBalance");
+  dBalElem.value = dep - depPaid;
+  dBalElem.className = (dep - depPaid > 0) ? "bal-due" : "bal-clear";
+
+  const comm = Number(document.getElementById("fComm").value) || 0;
+  const commPaid = Number(document.getElementById("fCommPaid").value) || 0;
+  const cBalElem = document.getElementById("fCommBalance");
+  cBalElem.value = comm - commPaid;
+  cBalElem.className = (comm - commPaid > 0) ? "bal-due" : "bal-clear";
+
+  // Calculate Overall Panel Totals
+  const totalSum = rent + dep + comm;
+  const paidSum = paid + depPaid + commPaid;
+  const balSum = totalSum - paidSum;
+
+  document.getElementById("panelTotSum").textContent = "₹" + totalSum;
+  document.getElementById("panelPaidSum").textContent = "₹" + paidSum;
+  const balElem = document.getElementById("panelBalSum");
+  balElem.textContent = "₹" + balSum;
+  balElem.className = balSum > 0 ? "bal-due" : "bal-clear";
+}
+
+function filterLevelCards(query) {
+  const q = query.toLowerCase().trim();
+  document.querySelectorAll('#main .btn-level').forEach(card => {
+    card.style.display = (q === "" || card.textContent.toLowerCase().includes(q)) ? "block" : "none";
+  });
+}
+
+function render(){
+  updateBrandingDisplay();
+  applyThemeColors();
+  applyTypography();
+  updateAdminUIState();
+  
+  let html = "";
+  let totalOcc = 0;
+  for(let f=1; f<=config.floors; f++){
+    const mains = getMainsCount(f);
+    for(let m=1; m<=mains; m++){
+      const apts = getAptsCount(f, m);
+      for(let a=1; a<=apts; a++){
+        totalOcc += countOccupied(f,m,a);
+      }
+    }
+  }
+  
+  const totalBedsCount = getTotalBeds();
+  const gFin = getGlobalFinancials();
+  const typeFin = getBedTypeFinancials();
+
+  if(view.level === "bed"){
+    const fName = getName('f-'+view.floor, config.levels.floor + ' ' + view.floor);
+    const mName = getName('m-'+view.floor+'-'+view.main, config.levels.main + ' ' + view.main);
+    const aName = getName('a-'+view.floor+'-'+view.main+'-'+view.apt, config.levels.apt + ' ' + view.apt);
+    const aptFin = getAptFinancials(view.floor, view.main, view.apt);
+    const typeFinApt = getAptBedTypeFinancials(view.floor, view.main, view.apt);
+
+    html += `<button class="back" onclick="view.level='apt';render()">← Back to ${config.levels.apt}s</button>`;
+    html += `<div style="color:var(--accent-color);font-family:var(--base-font-family);font-weight:600;margin-bottom:8px">${fName} · ${mName} · ${aName}</div>`;
+    html += `<div class="level-search-box"><input type="text" placeholder="Search beds or name..." oninput="filterLevelCards(this.value)"></div>`;
+    
+    const aptToggleText = showAptStats ? "▲ Hide Stats" : "▼ Show Stats";
+    html += `
+      <div class="dashboard-stats-header">
+        <span>APARTMENT SUMMARY</span>
+        <button class="btn-toggle-stats" onclick="toggleAptStatsVisibility()">${aptToggleText}</button>
+      </div>`;
+    
+    if(showAptStats) {
+      html += `
+        <div class="section-summary-box">
+          <div class="section-summary-title">RENT</div>
+          <div class="section-summary-grid">
+            <div><span>TOTAL</span><b>₹${aptFin.rentTot}</b></div>
+            <div><span>RECEIVED</span><b class="bal-clear">₹${aptFin.rentPd}</b></div>
+            <div><span>PENDING</span><b class="bal-due">₹${aptFin.rentPen}</b></div>
+          </div>
+        </div>
+        <div class="section-summary-box">
+          <div class="section-summary-title">DEPOSIT</div>
+          <div class="section-summary-grid">
+            <div><span>TOTAL</span><b>₹${aptFin.depTot}</b></div>
+            <div><span>RECEIVED</span><b class="bal-clear">₹${aptFin.depPd}</b></div>
+            <div><span>PENDING</span><b class="bal-due">₹${aptFin.depPen}</b></div>
+          </div>
+        </div>
+        <div class="section-summary-box">
+          <div class="section-summary-title">COMMISSION</div>
+          <div class="section-summary-grid">
+            <div><span>TOTAL</span><b>₹${aptFin.commTot}</b></div>
+            <div><span>RECEIVED</span><b class="bal-clear">₹${aptFin.commPd}</b></div>
+            <div><span>PENDING</span><b class="bal-due">₹${aptFin.commPen}</b></div>
+          </div>
+        </div>`;
+    }
+
+    html += `<div class="type-summary-row">`;
+    for(let t in typeFinApt){
+      let tf = typeFinApt[t];
+      if(tf.count > 0){
+        let rStyle = tf.rentPen > 0 ? "bal-due" : "bal-clear";
+        html += `<div class="type-summary-pill"><span>${t}:</span><span class="count">${tf.count}</span><span>Tot: ₹${tf.rentTot}</span><span>Bal: <b class="${rStyle}">₹${tf.rentPen}</b></span></div>`;
+      }
+    }
+    html += `</div>`;
+
+    const bCount = getBedsCount(view.floor, view.main, view.apt);
+    for(let b=1; b<=bCount; b++){
+      const bed = getBed(view.floor,view.main,view.apt,b);
+      const fin = calculateBedTotals(bed);
+      const rBalStyle = fin.rentPending > 0 ? "bal-due" : "bal-clear";
+      const details = bed.name ? ` · Ph: ${bed.phone} · Rent: ₹${fin.rentTotal} · <span class="${rBalStyle}">Bal: ₹${fin.rentPending}</span>` : ` · Rent: ₹${bed.rent}`;
+      const bKey = 'bed-' + key(view.floor, view.main, view.apt, b);
+      const bName = getBedLabel(view.floor, view.main, view.apt, b);
+      const renameBtn = isAdmin ? `<span class="edit-tag" onclick="editName(event, '${bKey}', '${config.levels.bed} ${b}')">✏️ Rename</span>` : "";
+
+      html += `<button class="btn-level bed ${bed.name ? "occupied" : ""}" onclick="openBed(${b})">
+        <div class="title-row"><span class="title">${bName} (${bed.bedType.toUpperCase()})</span>${renameBtn}</div>
+        <div class="sub">${bed.name || "Empty"} ${details}</div>
+      </button>`;
+    }
+  }
+  else if(view.level === "apt"){
+    const fName = getName('f-'+view.floor, config.levels.floor + ' ' + view.floor);
+    const mName = getName('m-'+view.floor+'-'+view.main, config.levels.main + ' ' + view.main);
+    const mainFin = getMainRoomFinancials(view.floor, view.main);
+    const typeFinMain = getMainRoomBedTypeFinancials(view.floor, view.main);
+
+    html += `<button class="back" onclick="view.level='main';render()">← Back to ${config.levels.main}s</button>`;
+    html += `<div style="color:var(--accent-color);font-family:var(--base-font-family);font-weight:600;margin-bottom:8px">${fName} · ${mName}</div>`;
+    html += `<div class="level-search-box"><input type="text" placeholder="Search apartments..." oninput="filterLevelCards(this.value)"></div>`;
+    
+    const mainToggleText = showMainStats ? "▲ Hide Stats" : "▼ Show Stats";
+    html += `
+      <div class="dashboard-stats-header">
+        <span>MAIN ROOM SUMMARY</span>
+        <button class="btn-toggle-stats" onclick="toggleMainStatsVisibility()">${mainToggleText}</button>
+      </div>`;
+    
+    if(showMainStats) {
+      html += `
+        <div class="section-summary-box">
+          <div class="section-summary-title">RENT</div>
+          <div class="section-summary-grid">
+            <div><span>TOTAL</span><b>₹${mainFin.rentTot}</b></div>
+            <div><span>RECEIVED</span><b class="bal-clear">₹${mainFin.rentPd}</b></div>
+            <div><span>PENDING</span><b class="bal-due">₹${mainFin.rentPen}</b></div>
+          </div>
+        </div>
+        <div class="section-summary-box">
+          <div class="section-summary-title">DEPOSIT</div>
+          <div class="section-summary-grid">
+            <div><span>TOTAL</span><b>₹${mainFin.depTot}</b></div>
+            <div><span>RECEIVED</span><b class="bal-clear">₹${mainFin.depPd}</b></div>
+            <div><span>PENDING</span><b class="bal-due">₹${mainFin.depPen}</b></div>
+          </div>
+        </div>
+        <div class="section-summary-box">
+          <div class="section-summary-title">COMMISSION</div>
+          <div class="section-summary-grid">
+            <div><span>TOTAL</span><b>₹${mainFin.commTot}</b></div>
+            <div><span>RECEIVED</span><b class="bal-clear">₹${mainFin.commPd}</b></div>
+            <div><span>PENDING</span><b class="bal-due">₹${mainFin.commPen}</b></div>
+          </div>
+        </div>`;
+    }
+
+    html += `<div class="type-summary-row">`;
+    for(let t in typeFinMain){
+      let tf = typeFinMain[t];
+      if(tf.count > 0){
+        let rStyle = tf.rentPen > 0 ? "bal-due" : "bal-clear";
+        html += `<div class="type-summary-pill"><span>${t}:</span><span class="count">${tf.count}</span><span>Tot: ₹${tf.rentTot}</span><span>Bal: <b class="${rStyle}">₹${tf.rentPen}</b></span></div>`;
+      }
+    }
+    html += `</div>`;
+
+    const apts = getAptsCount(view.floor, view.main);
+    for(let a=1; a<=apts; a++){
+      const aKey = 'a-'+view.floor+'-'+view.main+'-'+a;
+      const aName = getName(aKey, config.levels.apt + ' ' + a);
+      const occ = countOccupied(view.floor,view.main,a);
+      const fin = getAptFinancials(view.floor, view.main, a);
+      const renameBtn = isAdmin ? `<span class="edit-tag" onclick="editName(event, '${aKey}', '${config.levels.apt} ${a}')">✏️ Rename</span>` : "";
+
+      html += `<button class="btn-level apt" onclick="view.apt=${a};view.level='bed';render()">
+        <div class="title-row"><span class="title">${aName}</span>${renameBtn}</div>
+        <div class="sub">${occ} / ${getBedsCount(view.floor, view.main, a)} occupied</div>
+        <div class="sub" style="margin-top:4px;">Rent: <b>₹${fin.rentTot}</b> · <span class="bal-clear">₹${fin.rentPd}</span> · <span class="bal-due">₹${fin.rentPen}</span></div>
+      </button>`;
+    }
+  }
+  else if(view.level === "main"){
+    const fName = getName('f-'+view.floor, config.levels.floor + ' ' + view.floor);
+    const floorFin = getFloorFinancials(view.floor);
+    const typeFinFloor = getFloorBedTypeFinancials(view.floor);
+
+    html += `<button class="back" onclick="view.level='floor';render()">← Back to ${config.levels.floor}s</button>`;
+    html += `<div style="color:var(--accent-color);font-family:var(--base-font-family);font-weight:600;margin-bottom:8px">${fName}</div>`;
+    html += `<div class="level-search-box"><input type="text" placeholder="Search main rooms..." oninput="filterLevelCards(this.value)"></div>`;
+    
+    const floorToggleText = showFloorStats ? "▲ Hide Stats" : "▼ Show Stats";
+    html += `
+      <div class="dashboard-stats-header">
+        <span>FLOOR SUMMARY</span>
+        <button class="btn-toggle-stats" onclick="toggleFloorStatsVisibility()">${floorToggleText}</button>
+      </div>`;
+    
+    if(showFloorStats) {
+      html += `
+        <div class="section-summary-box">
+          <div class="section-summary-title">RENT</div>
+          <div class="section-summary-grid">
+            <div><span>TOTAL</span><b>₹${floorFin.rentTot}</b></div>
+            <div><span>RECEIVED</span><b class="bal-clear">₹${floorFin.rentPd}</b></div>
+            <div><span>PENDING</span><b class="bal-due">₹${floorFin.rentPen}</b></div>
+          </div>
+        </div>
+        <div class="section-summary-box">
+          <div class="section-summary-title">DEPOSIT</div>
+          <div class="section-summary-grid">
+            <div><span>TOTAL</span><b>₹${floorFin.depTot}</b></div>
+            <div><span>RECEIVED</span><b class="bal-clear">₹${floorFin.depPd}</b></div>
+            <div><span>PENDING</span><b class="bal-due">₹${floorFin.depPen}</b></div>
+          </div>
+        </div>
+        <div class="section-summary-box">
+          <div class="section-summary-title">COMMISSION</div>
+          <div class="section-summary-grid">
+            <div><span>TOTAL</span><b>₹${floorFin.commTot}</b></div>
+            <div><span>RECEIVED</span><b class="bal-clear">₹${floorFin.commPd}</b></div>
+            <div><span>PENDING</span><b class="bal-due">₹${floorFin.commPen}</b></div>
+          </div>
+        </div>`;
+    }
+
+    html += `<div class="type-summary-row">`;
+    for(let t in typeFinFloor){
+      let tf = typeFinFloor[t];
+      if(tf.count > 0){
+        let rStyle = tf.rentPen > 0 ? "bal-due" : "bal-clear";
+        html += `<div class="type-summary-pill"><span>${t}:</span><span class="count">${tf.count}</span><span>Tot: ₹${tf.rentTot}</span><span>Bal: <b class="${rStyle}">₹${tf.rentPen}</b></span></div>`;
+      }
+    }
+    html += `</div>`;
+
+    const mains = getMainsCount(view.floor);
+    for(let m=1; m<=mains; m++){
+      const mKey = 'm-'+view.floor+'-'+m;
+      const mName = getName(mKey, config.levels.main + ' ' + m);
+      let occ=0, capacity=0;
+      const apts = getAptsCount(view.floor, m);
+      for(let a=1; a<=apts; a++) {
+        occ += countOccupied(view.floor,m,a);
+        capacity += getBedsCount(view.floor,m,a);
+      }
+      const fin = getMainRoomFinancials(view.floor, m);
+      const renameBtn = isAdmin ? `<span class="edit-tag" onclick="editName(event, '${mKey}', '${config.levels.main} ${m}')">✏️ Rename</span>` : "";
+
+      html += `<button class="btn-level main" onclick="view.main=${m};view.level='apt';render()">
+        <div class="title-row"><span class="title">${mName}</span>${renameBtn}</div>
+        <div class="sub">${occ} / ${capacity} beds</div>
+        <div class="sub" style="margin-top:4px;">Rent: <b>₹${fin.rentTot}</b> · <span class="bal-clear">₹${fin.rentPd}</span> · <span class="bal-due">₹${fin.rentPen}</span></div>
+      </button>`;
+    }
+  }
+  else if(view.level === "floor"){
+    html += `<button class="back" onclick="view.level='dashboard';render()">← Back to Dashboard</button>`;
+    html += `<div style="color:var(--accent-color);font-family:var(--base-font-family);font-weight:600;margin-bottom:8px">SELECT FLOOR</div>`;
+
+    for(let f=1; f<=config.floors; f++){
+      const fKey = 'f-'+f;
+      const fName = getName(fKey, config.levels.floor.toUpperCase() + ' ' + f);
+      let occ=0, capacity=0;
+      const mains = getMainsCount(f);
+      for(let m=1; m<=mains; m++) {
+        const apts = getAptsCount(f, m);
+        for(let a=1; a<=apts; a++) {
+          occ += countOccupied(f,m,a);
+          capacity += getBedsCount(f,m,a);
+        }
+      }
+      const fin = getFloorFinancials(f);
+      const renameBtn = isAdmin ? `<span class="edit-tag" onclick="editName(event, '${fKey}', '${config.levels.floor.toUpperCase()} ${f}')">✏️ Rename</span>` : "";
+
+      html += `<button class="btn-level floor" onclick="view.floor=${f};view.level='main';render()">
+        <div class="title-row"><span class="title">${fName}</span>${renameBtn}</div>
+        <div class="sub">${occ} / ${capacity} beds</div>
+        <div class="sub" style="margin-top:4px;">Rent: <b>₹${fin.rentTot}</b> · <span class="bal-clear">₹${fin.rentPd}</span> · <span class="bal-due">₹${fin.rentPen}</span></div>
+      </button>`;
+    }
+  }
+  else {
+    html += `
+      <div class="stats-container" id="stats">
+        <div class="stats-row">
+          <div class="stats-col"><span>${config.labels.totalBeds}</span><b>${totalBedsCount}</b></div>
+          <div class="stats-col"><span>${config.labels.occupied}</span><b style="color:var(--accent-color)">${totalOcc}</b></div>
+          <div class="stats-col"><span>${config.labels.available}</span><b style="color:#6FA287">${totalBedsCount - totalOcc}</b></div>
+        </div>
+      </div>
+
+      <div class="section-summary-box">
+        <div class="section-summary-title">RENT</div>
+        <div class="section-summary-grid">
+          <div><span>TOTAL</span><b>₹${gFin.rentTot}</b></div>
+          <div><span>RECEIVED</span><b class="bal-clear">₹${gFin.rentPd}</b></div>
+          <div><span>PENDING</span><b class="bal-due">₹${gFin.rentPen}</b></div>
+        </div>
+      </div>
+
+      <div class="section-summary-box">
+        <div class="section-summary-title">DEPOSIT</div>
+        <div class="section-summary-grid">
+          <div><span>TOTAL</span><b>₹${gFin.depTot}</b></div>
+          <div><span>RECEIVED</span><b class="bal-clear">₹${gFin.depPd}</b></div>
+          <div><span>PENDING</span><b class="bal-due">₹${gFin.depPen}</b></div>
+        </div>
+      </div>
+
+      <div class="section-summary-box">
+        <div class="section-summary-title">COMMISSION</div>
+        <div class="section-summary-grid">
+          <div><span>TOTAL</span><b>₹${gFin.commTot}</b></div>
+          <div><span>RECEIVED</span><b class="bal-clear">₹${gFin.commPd}</b></div>
+          <div><span>PENDING</span><b class="bal-due">₹${gFin.commPen}</b></div>
+        </div>
+      </div>`;
+
+    html += `<div class="type-summary-row">`;
+    for(let t in typeFin){
+      let tf = typeFin[t];
+      if(tf.count > 0){
+        let rStyle = tf.rentPen > 0 ? "bal-due" : "bal-clear";
+        html += `<div class="type-summary-pill"><span>${t}:</span><span class="count">${tf.count}</span><span>Tot: ₹${tf.rentTot}</span><span>Bal: <b class="${rStyle}">₹${tf.rentPen}</b></span></div>`;
+      }
+    }
+    html += `</div>`;
+
+    html += `
+      <button class="btn-goto-floors" onclick="view.level='floor';render()">
+        <span>VIEW FLOORS & ROOMS</span>
+        <span style="font-size:20px;">➔</span>
+      </button>`;
+  }
+  document.getElementById("main").innerHTML = html;
+}
+
+function openBedDirect(f,m,a,b){
+  selected = {f, m, a, b};
+  const bed = getBed(f,m,a,b);
+  document.getElementById("panelTitle").textContent = `${getBedLabel(f,m,a,b)} Details`;
+  
+  const selectElem = document.getElementById("fBedType");
+  selectElem.innerHTML = "";
+  for(let type in config.rates){
+    selectElem.innerHTML += `<option value="${type}">${type}</option>`;
+  }
+  selectElem.value = config.rates[bed.bedType] !== undefined ? bed.bedType : Object.keys(config.rates)[0];
+
+  document.getElementById("fName").value = bed.name;
+  document.getElementById("fPhone").value = bed.phone;
+  document.getElementById("fRent").value = bed.rent;
+  document.getElementById("fPaid").value = bed.paid;
+  document.getElementById("fDep").value = bed.dep;
+  document.getElementById("fDepPaid").value = bed.depPaid;
+  document.getElementById("fComm").value = bed.comm;
+  document.getElementById("fCommPaid").value = bed.commPaid;
+  document.getElementById("fJoin").value = bed.join;
+  document.getElementById("fEnd").value = bed.end;
+
+  updateBalance();
+
+  document.getElementById("fBedType").disabled = !isAdmin;
+  document.getElementById("fRent").readOnly = true;
+  document.getElementById("fDep").readOnly = true;
+  document.getElementById("fComm").readOnly = true;
+
+  document.getElementById("fName").readOnly = false;
+  document.getElementById("fPhone").readOnly = false;
+  document.getElementById("fPaid").readOnly = false;
+  document.getElementById("fDepPaid").readOnly = false;
+  document.getElementById("fCommPaid").readOnly = false;
+  document.getElementById("fJoin").readOnly = false;
+  document.getElementById("fEnd").readOnly = false;
+
+  document.getElementById("btnSave").style.display = "block";
+  document.getElementById("btnClear").style.display = "block";
+
+  document.getElementById("overlay").style.display = "flex";
+}
+
+function openBed(b){ openBedDirect(view.floor, view.main, view.apt, b); }
+
+function closePanel(){
+  document.getElementById("overlay").style.display = "none";
+  selected = null;
+}
+
+function save(){
+  if(!selected) return;
+  const bed = getBed(selected.f, selected.m, selected.a, selected.b);
+  
+  if(isAdmin){
+    bed.bedType = document.getElementById("fBedType").value;
+    const rObj = config.rates[bed.bedType] || { rent: 2000, dep: 1000, comm: 500 };
+    bed.rent = rObj.rent;
+    bed.dep = rObj.dep;
+    bed.comm = rObj.comm;
+  }
+
+  bed.name = document.getElementById("fName").value.trim();
+  bed.phone = document.getElementById("fPhone").value.trim();
+  bed.paid = Number(document.getElementById("fPaid").value) || 0;
+  bed.depPaid = Number(document.getElementById("fDepPaid").value) || 0;
+  bed.commPaid = Number(document.getElementById("fCommPaid").value) || 0;
+  bed.join = document.getElementById("fJoin").value;
+  bed.end = document.getElementById("fEnd").value;
+
+  saveToStorage();
+  showToast("Saved Successfully");
+  closePanel();
+  render();
+}
+
+function clearBed(){
+  if(selected){
+    const bed = getBed(selected.f, selected.m, selected.a, selected.b);
+    bed.name=""; bed.phone=""; bed.paid=0; bed.depPaid=0; bed.commPaid=0; bed.join=""; bed.end="";
+    saveToStorage();
+    showToast("Cleared Bed");
+    closePanel();
+    render();
+  }
+}
+
+function showToast(msg){
+  const t=document.getElementById("toast");
+  t.textContent=msg; t.style.display="block";
+  setTimeout(()=>t.style.display="none",1800);
+}
+
+(async function init(){
+  await loadFromStorage();
+  render();
+  subscribeRealtime();
+})();
+</script>
+</body>
+</html>
